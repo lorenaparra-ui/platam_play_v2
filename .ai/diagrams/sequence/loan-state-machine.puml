@@ -1,0 +1,38 @@
+@startuml loan-state-machine
+!theme plain
+title Máquina de estados - Préstamo (Loan)
+
+state "PENDING\n(solicitud creada)" as PENDING
+state "UNDER_REVIEW\n(en evaluación)" as UNDER_REVIEW
+state "APPROVED\n(aprobado, no desembolsado)" as APPROVED
+state "ACTIVE\n(desembolsado, con cuotas)" as ACTIVE
+state "PAID_OFF\n(pagado totalmente)" as PAID_OFF
+state "DEFAULTED\n(mora / incumplimiento)" as DEFAULTED
+state "CANCELLED\n(cancelado)" as CANCELLED
+
+[*] --> PENDING : Crear LoanRequest
+
+PENDING --> UNDER_REVIEW : Iniciar evaluación
+UNDER_REVIEW --> APPROVED : Riesgo OK
+UNDER_REVIEW --> CANCELLED : Rechazado
+
+APPROVED --> ACTIVE : Desembolso ejecutado
+APPROVED --> CANCELLED : Cliente cancela / expira oferta
+
+ACTIVE --> PAID_OFF : Última cuota pagada\n(balance = 0)
+ACTIVE --> DEFAULTED : Vencimiento sin pago\n(según política de días)
+
+DEFAULTED --> ACTIVE : Pago en mora recibido\n(reactivación)
+DEFAULTED --> PAID_OFF : Pago total en mora
+
+PAID_OFF --> [*]
+CANCELLED --> [*]
+DEFAULTED --> [*] : Escalación cobranza / castigo
+
+note right of ACTIVE
+  Estados intermedios por cuota:
+  - Cada Installment tiene su propio
+    estado (PENDING, PAID, OVERDUE)
+end note
+
+@enduml

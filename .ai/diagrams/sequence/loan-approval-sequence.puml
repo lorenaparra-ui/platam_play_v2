@@ -1,0 +1,42 @@
+@startuml loan-approval-sequence
+!theme plain
+title Flujo de aprobación de préstamo (secuencia)
+
+actor "Cliente" as Client
+participant "Web / WhatsApp" as Channel
+participant "API" as API
+participant "LoanService" as LoanSvc
+participant "RiskEngine" as Risk
+participant "Database" as DB
+participant "Payvalida" as Payvalida
+participant "Notifier" as Notifier
+
+== Solicitud ==
+Client -> Channel: Crear solicitud de préstamo (monto, producto)
+Channel -> API: POST /api/loan-requests
+API -> LoanSvc: createRequest(userId, amount, productType)
+LoanSvc -> DB: Guardar LoanRequest (status: PENDING)
+LoanSvc --> API: LoanRequest creado
+API --> Channel: 201 Created
+
+== Evaluación (worker o síncrono) ==
+API -> Risk: evaluateRequest(loanRequestId)
+Risk -> DB: Obtener historial del usuario
+Risk -> Payvalida: Consultar scoring / validación
+Payvalida --> Risk: Resultado validación
+Risk -> Risk: Aplicar reglas de negocio
+alt Aprobado
+  Risk -> DB: Actualizar LoanRequest (APPROVED)
+  Risk -> LoanSvc: createLoan(loanRequestId)
+  LoanSvc -> DB: Crear Loan + Installments
+  LoanSvc -> Notifier: notifyApproval(client, loan)
+  Notifier -> Client: Email / WhatsApp: "Préstamo aprobado"
+else Rechazado
+  Risk -> DB: Actualizar LoanRequest (REJECTED), guardar motivo
+  Risk -> Notifier: notifyRejection(client, reason)
+  Notifier -> Client: "Solicitud no aprobada"
+end
+Risk --> API: Resultado evaluación
+API --> Channel: (async o webhook)
+
+@enduml

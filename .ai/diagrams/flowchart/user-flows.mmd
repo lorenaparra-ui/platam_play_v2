@@ -1,0 +1,23 @@
+%% Flujos de usuario principales
+%% Completar con flujos reales: onboarding, solicitud de préstamo, cobranza, etc.
+
+flowchart LR
+    subgraph Onboarding
+        A1[Registro] --> A2[KYC]
+        A2 --> A3[Aprobación]
+        A3 --> A4[Activación]
+    end
+
+    subgraph Loan
+        B1[Solicitud] --> B2[Evaluación]
+        B2 --> B3[Desembolso]
+        B3 --> B4[Cuotas]
+    end
+
+    subgraph Collections
+        C1[Vencimiento] --> C2[Recordatorio]
+        C2 --> C3[Pago / Mora]
+    end
+
+    Onboarding --> Loan
+    Loan --> Collections

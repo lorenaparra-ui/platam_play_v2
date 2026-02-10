@@ -1,0 +1,34 @@
+%% Sistema - Arquitectura de alto nivel
+%% Ejemplo Mermaid: ajustar según el diseño real
+
+flowchart TB
+    subgraph Clients
+        Web[Web App]
+        WhatsApp[WhatsApp / Bot]
+    end
+
+    subgraph "apps/"
+        API[api - Backend]
+        Worker[worker - Jobs]
+    end
+
+    subgraph "packages/"
+        Shared[shared]
+        DB[(database)]
+        Integrations[integration-clients]
+    end
+
+    subgraph External
+        Payvalida[Payvalida]
+        Twilio[Twilio]
+    end
+
+    Web --> API
+    WhatsApp --> API
+    API --> Shared
+    API --> DB
+    API --> Integrations
+    Worker --> DB
+    Worker --> Integrations
+    Integrations --> Payvalida
+    Integrations --> Twilio

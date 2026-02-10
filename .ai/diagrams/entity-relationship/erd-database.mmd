@@ -1,0 +1,44 @@
+%% ERD - Entity Relationship Diagram (ejemplo)
+%% Ajustar entidades y relaciones al modelo real
+
+erDiagram
+    User ||--o{ Loan : requests
+    User ||--o{ Payment : makes
+    Loan ||--o{ Payment : has
+    Company ||--o{ User : employs
+    Loan }o--|| Product : "product type"
+
+    User {
+        uuid id PK
+        string email
+        string name
+        datetime created_at
+    }
+
+    Loan {
+        uuid id PK
+        uuid user_id FK
+        decimal amount
+        string status
+        datetime created_at
+    }
+
+    Payment {
+        uuid id PK
+        uuid loan_id FK
+        decimal amount
+        string status
+        datetime created_at
+    }
+
+    Company {
+        uuid id PK
+        string name
+        string tax_id
+    }
+
+    Product {
+        uuid id PK
+        string type
+        string name
+    }

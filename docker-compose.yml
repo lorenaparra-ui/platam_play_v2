@@ -1,0 +1,96 @@
+version: '3.8'
+
+services:
+  # ------------------------------------------------
+  # Base de Datos PostgreSQL
+  # ------------------------------------------------
+  postgres:
+    image: postgres:15-alpine
+    container_name: platam_db
+    restart: always
+    env_file:
+      - .env.docker
+    environment:
+      POSTGRES_USER: ${POSTGRES_USERNAME:-admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DATABASE:-platam_play}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - backend-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USERNAME:-admin} -d ${POSTGRES_DATABASE:-platam_play}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ------------------------------------------------
+  # Microservicio 1: Users (Existente)
+  # ------------------------------------------------
+  users-service:
+    build:
+      context: ./platam_play_users
+      dockerfile: Dockerfile
+    container_name: platam_users
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file:
+      - .env.docker
+    environment:
+      NODE_ENV: production
+      # Conexión a DB usando el nombre del servicio 'postgres' como host
+      POSTGRES_HOST: postgres
+      POSTGRES_USER: ${POSTGRES_USERNAME:-admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DATABASE:-platam_play}
+      TYPEORM_TYPE: postgres
+      TYPEORM_PORT: 5432
+      PORT: 3000
+    ports:
+      - "3000:3000"
+    networks:
+      - backend-network
+
+  # ------------------------------------------------
+  # Microservicio 2: Notifications (Simulado)
+  # ------------------------------------------------
+  # Para cumplir el requisito de "al menos 2 servicios", reutilizamos la imagen
+  # de users pero corriendo como un servicio separado en otro puerto.
+  # En el futuro, cambia el 'context' a la carpeta de tu nuevo microservicio.
+  # notifications-service:
+  #   build:
+  #     context: ./platam_play_users # Cambiar a ./platam_play_notifications
+  #     dockerfile: Dockerfile
+  #   container_name: platam_notifications
+  #   restart: unless-stopped
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #   environment:
+  #     NODE_ENV: production
+  #     DB_HOST: postgres
+  #     DB_PORT: 5432
+  #     DB_USERNAME: ${POSTGRES_USER:-admin}
+  #     DB_PASSWORD: ${POSTGRES_PASSWORD:-securepassword}
+  #     DB_DATABASE: ${POSTGRES_DB:-platam_play}
+  #     PORT: 3001 # Puerto interno diferente si la app lo soporta por env var
+  #   ports:
+  #     - "3001:3001" # Mapeo externo diferente
+  #   networks:
+  #     - backend-network
+
+# ------------------------------------------------
+# Redes y Volúmenes
+# ------------------------------------------------
+networks:
+  backend-network:
+    driver: bridge
+    name: platam_backend_net
+
+volumes:
+  postgres_data:
+    driver: local
