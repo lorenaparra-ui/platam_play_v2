@@ -11,6 +11,7 @@ import { AppController } from './app.controller';
 import appConfig from './config/app.config';
 import { CommonModule } from '@common/common.module';
 import { InfrastructureModule } from '@infrastructure/infrastructure.module';
+import { TransversalModule } from './transversal/transversal.module';
 
 
 
@@ -23,7 +24,7 @@ import { InfrastructureModule } from '@infrastructure/infrastructure.module';
     }),
     InfrastructureModule,
     CommonModule,
-    
+    TransversalModule,
   ],
   controllers: [AppController],
   providers: [],
